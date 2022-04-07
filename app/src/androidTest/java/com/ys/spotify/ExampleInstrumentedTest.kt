@@ -19,6 +19,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.plcoding.spotifycloneyt", appContext.packageName)
+        assertEquals("com.ys.spotify", appContext.packageName)
     }
 }

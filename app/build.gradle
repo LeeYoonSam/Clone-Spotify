@@ -3,12 +3,13 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'dagger.hilt.android.plugin'
+apply plugin: 'com.google.gms.google-services'
 
 android {
     compileSdkVersion 31
 
     defaultConfig {
-        applicationId "com.plcoding.spotifycloneyt"
+        applicationId "com.ys.spotify"
         minSdkVersion 21
         targetSdkVersion 31
         versionCode 1
@@ -89,7 +90,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-storage-ktx:20.0.1'
 
     // Firebase Coroutines
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.1.1'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.0'
 
     // ExoPlayer
     api "com.google.android.exoplayer:exoplayer-core:2.17.1"
