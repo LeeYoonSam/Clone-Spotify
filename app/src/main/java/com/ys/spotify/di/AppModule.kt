@@ -1,4 +1,4 @@
-package com.ys.spotify.data.di
+package com.ys.spotify.di
 
 import android.content.Context
 import com.bumptech.glide.Glide

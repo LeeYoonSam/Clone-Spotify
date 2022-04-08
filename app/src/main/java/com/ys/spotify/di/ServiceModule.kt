@@ -1,4 +1,4 @@
-package com.ys.spotify.data.di
+package com.ys.spotify.di
 
 import android.content.Context
 import com.google.android.exoplayer2.C
@@ -19,7 +19,7 @@ object ServiceModule {
 
     @ServiceScoped
     @Provides
-    fun provideAudioAttributes() = AudioAttributes.Builder()
+    fun provideAudioAttributes(): AudioAttributes = AudioAttributes.Builder()
         .setContentType(C.CONTENT_TYPE_MUSIC)
         .setUsage(C.USAGE_MEDIA)
         .build()
@@ -29,7 +29,7 @@ object ServiceModule {
     fun provideExoPlayer(
         @ApplicationContext context: Context,
         audioAttributes: AudioAttributes
-    ) = ExoPlayer.Builder(context).apply {
+    ): ExoPlayer = ExoPlayer.Builder(context).build().apply {
         setAudioAttributes(audioAttributes, true)
         // 헤드폰, 이어폰등을 연결하면 매우 시끄럽기 때문에 일시정지하는 기능
         setHandleAudioBecomingNoisy(true)
@@ -39,7 +39,7 @@ object ServiceModule {
     @Provides
     fun provideDataSourceFactory(
         @ApplicationContext context: Context
-    ) = DefaultDataSource.Factory(
+    ): DefaultDataSource.Factory = DefaultDataSource.Factory(
         context,
         DefaultHttpDataSource
             .Factory()

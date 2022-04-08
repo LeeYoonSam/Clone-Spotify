@@ -1,7 +1,7 @@
 package com.ys.spotify.data.remote
 
 import com.google.firebase.firestore.FirebaseFirestore
-import com.ys.spotify.data.common.Constants.SONG_COLLECTION
+import com.ys.spotify.common.Constants.SONG_COLLECTION
 import com.ys.spotify.data.entities.Song
 import kotlinx.coroutines.tasks.await
 
