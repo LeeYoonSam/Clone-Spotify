@@ -8,6 +8,7 @@ import androidx.media.MediaBrowserServiceCompat
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.upstream.DefaultDataSource
+import com.ys.spotify.exoplayer.callbacks.MusicPlayerNotificationListener
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +26,8 @@ class MusicService : MediaBrowserServiceCompat() {
 
     @Inject
     lateinit var exoplayer: ExoPlayer
+
+    private lateinit var musicNotificationManager: MusicNotificationManager
 
     /**
      * Firebase 에서 데이터를 비동기로 가져올때 사용할 코루틴 Job
@@ -47,6 +50,8 @@ class MusicService : MediaBrowserServiceCompat() {
      */
     private lateinit var mediaSessionConnector: MediaSessionConnector
 
+    var isForegroundService = false
+
     /**
      * 관련 변수들을 초기화
      */
@@ -66,6 +71,14 @@ class MusicService : MediaBrowserServiceCompat() {
         }
 
         sessionToken = mediaSession.sessionToken
+
+        musicNotificationManager = MusicNotificationManager(
+            this,
+            mediaSession.sessionToken,
+            MusicPlayerNotificationListener(this)
+        ) {
+
+        }
 
         mediaSessionConnector = MediaSessionConnector(mediaSession)
         mediaSessionConnector.setPlayer(exoplayer)
