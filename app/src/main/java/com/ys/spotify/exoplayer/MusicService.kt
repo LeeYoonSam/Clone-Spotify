@@ -3,17 +3,18 @@ package com.ys.spotify.exoplayer
 import android.app.PendingIntent
 import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
+import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import androidx.media.MediaBrowserServiceCompat
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.upstream.DefaultDataSource
+import com.ys.spotify.data.entities.Song
+import com.ys.spotify.exoplayer.callbacks.MusicPlaybackPreparer
+import com.ys.spotify.exoplayer.callbacks.MusicPlayerEventListener
 import com.ys.spotify.exoplayer.callbacks.MusicPlayerNotificationListener
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
 import javax.inject.Inject
 
 private const val SERVICE_TAG = "MusicService"
@@ -26,6 +27,9 @@ class MusicService : MediaBrowserServiceCompat() {
 
     @Inject
     lateinit var exoplayer: ExoPlayer
+
+    @Inject
+    lateinit var firebaseMusicSource: FirebaseMusicSource
 
     private lateinit var musicNotificationManager: MusicNotificationManager
 
@@ -52,11 +56,17 @@ class MusicService : MediaBrowserServiceCompat() {
 
     var isForegroundService = false
 
+    private var curPlayingSong: MediaMetadataCompat? = null
+
     /**
      * 관련 변수들을 초기화
      */
     override fun onCreate() {
         super.onCreate()
+
+        serviceScope.launch {
+            firebaseMusicSource.fetchMediaData()
+        }
 
         /**
          * 알림에 대한 액티비티를 얻고 클릭하면 액티비티를 실행
@@ -80,9 +90,40 @@ class MusicService : MediaBrowserServiceCompat() {
 
         }
 
+        val musicPlaybackPreparer = MusicPlaybackPreparer(firebaseMusicSource) {
+            curPlayingSong = it
+            preparePlayer(
+                songs = firebaseMusicSource.songs,
+                itemToPlay = it,
+                playNow = true
+            )
+        }
+
         mediaSessionConnector = MediaSessionConnector(mediaSession)
+        mediaSessionConnector.setPlaybackPreparer(musicPlaybackPreparer)
         mediaSessionConnector.setPlayer(exoplayer)
 
+        exoplayer.addListener(MusicPlayerEventListener(this))
+        musicNotificationManager.showNotification(exoplayer)
+    }
+
+    /**
+     * exoPlayer 재생 준비
+     *
+     * @param songs 재생 목록
+     * @param itemToPlay 현재 선택된 미디어
+     * @param playNow 바로 재생 여부
+     */
+    private fun preparePlayer(
+        songs: List<MediaMetadataCompat>,
+        itemToPlay: MediaMetadataCompat?,
+        playNow: Boolean
+    ) {
+        val curSongIndexId = if (curPlayingSong == null) 0 else songs.indexOf(itemToPlay)
+        exoplayer.prepare()
+        exoplayer.setMediaSource(firebaseMusicSource.asMediaSource(dataSourceFactory))
+        exoplayer.seekTo(curSongIndexId, 0L)
+        exoplayer.playWhenReady = playNow
     }
 
     override fun onDestroy() {
