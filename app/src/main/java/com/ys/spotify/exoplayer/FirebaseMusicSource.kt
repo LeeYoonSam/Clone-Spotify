@@ -87,7 +87,7 @@ class FirebaseMusicSource @Inject constructor(
             .build()
 
         MediaBrowserCompat.MediaItem(desc, FLAG_PLAYABLE)
-    }
+    }.toMutableList()
 
     /**
      * boolean 으로 나중에 소스가 초기화 되었는지 확인

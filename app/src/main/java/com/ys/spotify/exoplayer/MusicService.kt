@@ -1,14 +1,19 @@
 package com.ys.spotify.exoplayer
 
 import android.app.PendingIntent
+import android.content.Intent
 import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
+import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import androidx.media.MediaBrowserServiceCompat
 import com.google.android.exoplayer2.ExoPlayer
+import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
+import com.google.android.exoplayer2.ext.mediasession.TimelineQueueNavigator
 import com.google.android.exoplayer2.upstream.DefaultDataSource
+import com.ys.spotify.common.Constants.MEDIA_ROOT_ID
 import com.ys.spotify.data.entities.Song
 import com.ys.spotify.exoplayer.callbacks.MusicPlaybackPreparer
 import com.ys.spotify.exoplayer.callbacks.MusicPlayerEventListener
@@ -58,6 +63,16 @@ class MusicService : MediaBrowserServiceCompat() {
 
     private var curPlayingSong: MediaMetadataCompat? = null
 
+    private var isPlayerInitialized = false
+
+    private lateinit var musicPlayerEventListener: MusicPlayerEventListener
+
+    companion object {
+        // 서비스내에서만 값을 변경할수 있도록 private set 으로 지정
+        var curSongDuration = 0L
+            private set
+    }
+
     /**
      * 관련 변수들을 초기화
      */
@@ -87,7 +102,7 @@ class MusicService : MediaBrowserServiceCompat() {
             mediaSession.sessionToken,
             MusicPlayerNotificationListener(this)
         ) {
-
+            curSongDuration = exoplayer.duration
         }
 
         val musicPlaybackPreparer = MusicPlaybackPreparer(firebaseMusicSource) {
@@ -101,10 +116,21 @@ class MusicService : MediaBrowserServiceCompat() {
 
         mediaSessionConnector = MediaSessionConnector(mediaSession)
         mediaSessionConnector.setPlaybackPreparer(musicPlaybackPreparer)
+        mediaSessionConnector.setQueueNavigator(MusicQueueNavigator())
         mediaSessionConnector.setPlayer(exoplayer)
 
+        musicPlayerEventListener = MusicPlayerEventListener(this)
         exoplayer.addListener(MusicPlayerEventListener(this))
         musicNotificationManager.showNotification(exoplayer)
+    }
+
+    /**
+     * 노래에 대한 정보를 알림에 전달 후 표시
+     */
+    private inner class MusicQueueNavigator : TimelineQueueNavigator(mediaSession) {
+        override fun getMediaDescription(player: Player, windowIndex: Int): MediaDescriptionCompat {
+            return firebaseMusicSource.songs[windowIndex].description
+        }
     }
 
     /**
@@ -126,23 +152,61 @@ class MusicService : MediaBrowserServiceCompat() {
         exoplayer.playWhenReady = playNow
     }
 
+
+    /**
+     * 서비스의 작업이 제거 되었을때
+     */
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        exoplayer.stop()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         serviceScope.cancel()
+
+        // 메모리 누수를 방지하기 위해 리스너 제거
+        exoplayer.removeListener(musicPlayerEventListener)
+        exoplayer.release()
     }
 
     override fun onGetRoot(
         clientPackageName: String,
         clientUid: Int,
         rootHints: Bundle?
-    ): BrowserRoot? {
-        TODO("Not yet implemented")
+    ): BrowserRoot {
+        return BrowserRoot(MEDIA_ROOT_ID, null)
     }
 
     override fun onLoadChildren(
         parentId: String,
         result: Result<MutableList<MediaBrowserCompat.MediaItem>>
     ) {
-        TODO("Not yet implemented")
+        when (parentId) {
+            MEDIA_ROOT_ID -> {
+                val resultsSent = firebaseMusicSource.whenReady { isInitialized ->
+                    if (isInitialized) {
+                        result.sendResult(firebaseMusicSource.asMediaItems())
+
+                        if (!isPlayerInitialized && firebaseMusicSource.songs.isNotEmpty()) {
+                            // 앱이 열리면 재생준비를 하지만 바로 재생하지는 않도록 처리
+                            preparePlayer(
+                                songs = firebaseMusicSource.songs,
+                                itemToPlay = firebaseMusicSource.songs.first(),
+                                playNow = false
+                            )
+
+                            isPlayerInitialized = true
+                        } else {
+                            result.sendResult(null)
+                        }
+                    }
+                }
+
+                if (!resultsSent) {
+                    result.detach()
+                }
+            }
+        }
     }
 }
