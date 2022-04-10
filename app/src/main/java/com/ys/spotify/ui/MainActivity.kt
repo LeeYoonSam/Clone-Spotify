@@ -1,8 +1,9 @@
-package com.ys.spotify
+package com.ys.spotify.ui
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import com.bumptech.glide.RequestManager
+import com.ys.spotify.R
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
