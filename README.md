@@ -1,5 +1,29 @@
 # Spotify Clone
 
+## DaggerHilt
+
+### SongAdapter, SwipeSongAdapter 주입방식
+
+**SongAdapter**
+```kotlin
+class SongAdapter @Inject constructor(
+    private val glide: RequestManager
+) : BaseSongAdapter(R.layout.list_item)
+```
+
+**SwipeSongAdapter**
+```kotlin
+class SwipeSongAdapter : BaseSongAdapter(R.layout.list_item)
+```
+
+- `SongAdapter` 는 module 에서 provide 로 제공하지 않아도 `@Inject constructor` 를 통해서 DaggerHilt 가 자동으로 필요한 것을 주입하고 생성을 해준다.
+- `SwipeSongAdapter` 는 생성자가 없고 생성하기 매우 쉽더라도 실제로 이를 알지 못하므로 명시적으로 삽입을 해야한다.
+- `SwipeSongAdapter` 를 제공하는 방법은 2가지가 있다.
+    1. `@Inject constructor()` 빈생성자를 추가하고 @Inject 를 명시해서 생성
+    2. `@Module`에서 @Provides 로 직접 생성
+
+---
+
 ## 발생한 문제 리포트
 
 ### MusicService sendResult 에러
