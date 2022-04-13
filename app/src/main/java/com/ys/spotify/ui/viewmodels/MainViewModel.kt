@@ -13,9 +13,10 @@ import com.ys.spotify.exoplayer.isPlayEnabled
 import com.ys.spotify.exoplayer.isPlaying
 import com.ys.spotify.exoplayer.isPrepared
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
 @HiltViewModel
-class MainViewModel constructor(
+class MainViewModel @Inject constructor(
     private val musicServiceConnection: MusicServiceConnection
 ) : ViewModel() {
 

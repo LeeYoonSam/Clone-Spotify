@@ -14,6 +14,13 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <service android:name=".exoplayer.MusicService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.media.browse.MediaBrowserService" />
+            </intent-filter>
+        </service>
+
         <activity android:name="com.ys.spotify.ui.MainActivity"
             android:exported="true">
             <intent-filter>

@@ -146,10 +146,13 @@ class MusicService : MediaBrowserServiceCompat() {
         playNow: Boolean
     ) {
         val curSongIndexId = if (curPlayingSong == null) 0 else songs.indexOf(itemToPlay)
-        exoplayer.prepare()
-        exoplayer.setMediaSource(firebaseMusicSource.asMediaSource(dataSourceFactory))
-        exoplayer.seekTo(curSongIndexId, 0L)
-        exoplayer.playWhenReady = playNow
+
+        serviceScope.launch {
+            exoplayer.prepare()
+            exoplayer.setMediaSource(firebaseMusicSource.asMediaSource(dataSourceFactory))
+            exoplayer.seekTo(curSongIndexId, 0L)
+            exoplayer.playWhenReady = playNow
+        }
     }
 
 
@@ -199,7 +202,7 @@ class MusicService : MediaBrowserServiceCompat() {
                             isPlayerInitialized = true
                         } else {
                             mediaSession.sendSessionEvent(NETWORK_ERROR, null )
-                            result.sendResult(null)
+//                            result.sendResult(null)
                         }
                     }
                 }
